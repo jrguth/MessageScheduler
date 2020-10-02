@@ -15,6 +15,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Swashbuckle.AspNetCore.Swagger;
+using AutoMapper;
 
 namespace MessageScheduler
 {
@@ -31,6 +32,7 @@ namespace MessageScheduler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services.AddOptions<DbContextOptions<MessageSchedulerContext>>();
             services.AddDbContext<MessageSchedulerContext>(options =>
             {
                 options.UseSqlServer(Configuration["ConnectionString"]);
@@ -40,6 +42,7 @@ namespace MessageScheduler
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Message Scheduler API Docs", Version = "v1" });
             });
+            services.AddAutoMapper(typeof(Startup));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

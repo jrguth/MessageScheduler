@@ -10,40 +10,55 @@ namespace MessageScheduler.Data
 {
     public class ScheduledTextRepository : IScheduledTextRepository
     {
-        private MessageSchedulerContext context;
+        private DbContextOptions<MessageSchedulerContext> options;
 
-        public ScheduledTextRepository(MessageSchedulerContext context)
+        public ScheduledTextRepository(DbContextOptions<MessageSchedulerContext> options)
         {
-            this.context = context;
+            this.options = options;
         }
 
         public void CreateScheduledText(ScheduledText scheduledText)
         {
-            context.ScheduledTexts.Add(scheduledText);
-            context.SaveChanges();
+            using (var context = new MessageSchedulerContext(options))
+            {
+                context.ScheduledTexts.Add(scheduledText);
+                context.SaveChanges();
+            }
         }
 
         public void DeleteScheduledText(int id)
         {
-            ScheduledText text = context.ScheduledTexts.Find(id);
-            context.ScheduledTexts.Remove(text);
-            context.SaveChanges();
+            using (var context = new MessageSchedulerContext(options))
+            {
+                ScheduledText text = context.ScheduledTexts.Find(id);
+                context.ScheduledTexts.Remove(text);
+                context.SaveChanges();
+            }           
         }
 
         public ScheduledText GetScheduledTextById(int id)
         {
-            return context.ScheduledTexts.Find(id);
+            using (var context = new MessageSchedulerContext(options))
+            {
+                return context.ScheduledTexts.Find(id);
+            }                
         }
 
         public IEnumerable<ScheduledText> GetScheduledTexts()
         {
-            return context.ScheduledTexts.ToList();
+            using (var context = new MessageSchedulerContext(options))
+            {
+                return context.ScheduledTexts.ToList();
+            }             
         }
 
         public void UpdateScheduledText(ScheduledText scheduledText)
         {
-            context.Entry(scheduledText).State = EntityState.Modified;
-            context.SaveChanges();
+            using (var context = new MessageSchedulerContext(options))
+            {
+                context.Entry(scheduledText).State = EntityState.Modified;
+                context.SaveChanges();
+            }
         }
     }
 }

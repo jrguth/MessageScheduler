@@ -15,6 +15,6 @@ namespace MessageScheduler.Models
         public string PhoneNumber { get; set; }
 
         [Required]
-        public TimeSpan UtcTime { get; set; }
+        public DateTime DateUTC { get; set; }
     }
 }

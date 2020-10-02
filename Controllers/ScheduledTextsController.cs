@@ -7,24 +7,29 @@ using MessageScheduler.Data;
 using MessageScheduler.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
+using AutoMapper;
 
 namespace MessageScheduler.Controllers
 {
     [Route("api/v1/ScheduledTexts")]
     [ApiController]
-    public class ScheduleTextController : ControllerBase
+    public class ScheduledTextsController : ControllerBase
     {
         private IScheduledTextRepository repo;
-        public ScheduleTextController(IScheduledTextRepository repo)
+        private IMapper mapper;
+
+        public ScheduledTextsController(IScheduledTextRepository repo, IMapper mapper)
         {
             this.repo = repo;
+            this.mapper = mapper;
         }
 
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         public ActionResult<IEnumerable<ScheduledTextModel>> Get()
         {
-            return Ok(repo.GetScheduledTexts());
+            IEnumerable<ScheduledText> scheduledTexts = repo.GetScheduledTexts();
+            return Ok(mapper.Map<IEnumerable<ScheduledText>, IEnumerable<ScheduledTextModel>>(scheduledTexts));
         }
 
         [HttpGet("{id}")]
@@ -32,20 +37,21 @@ namespace MessageScheduler.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult<ScheduledTextModel> Get(int id)
         {
-            ScheduledTextModel text = repo.GetScheduledTextById(id);
+            ScheduledText text = repo.GetScheduledTextById(id);
             if  (text is null)
             {
                 return NotFound();
             }
-            return text;
+            return mapper.Map<ScheduledTextModel>(text);
         }
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public ActionResult<ScheduledTextModel> Post([FromBody] ScheduledTextModel scheduledText)
         {
-            repo.CreateScheduledText(scheduledText);
-            return Created($"{HttpContext.Request.GetEncodedUrl()}/{scheduledText.Id}", scheduledText);
+            ScheduledText text = mapper.Map<ScheduledText>(scheduledText);
+            repo.CreateScheduledText(text);
+            return Created($"{HttpContext.Request.GetEncodedUrl()}/{text.Id}", text);
         }
 
         // DELETE api/<ScheduleTextController>/5
@@ -54,7 +60,7 @@ namespace MessageScheduler.Controllers
         [ProducesResponseType(StatusCodes.Status404NotFound)]
         public ActionResult Delete(int id)
         {
-            ScheduledTextModel text = repo.GetScheduledTextById(id);
+            ScheduledText text = repo.GetScheduledTextById(id);
             if (text is null)
             {
                 return NotFound();

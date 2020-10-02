@@ -23,7 +23,7 @@ namespace MessageScheduler.Data
                 .Property(s => s.PhoneNumber)
                 .IsRequired(true);
             modelBuilder.Entity<ScheduledText>()
-                .Property(s => s.UtcTime)
+                .Property(s => s.DateUTC)
                 .IsRequired(true);
             modelBuilder.Entity<ScheduledText>()
                 .Property(s => s.Id)
