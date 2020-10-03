@@ -10,7 +10,7 @@ namespace MessageScheduler.Workers
 {
     public class SendTextJob
     {
-        private const string message = "Hi BIB!";
+        private const string message = "Hello! This is an automated message test";
         private IScheduledTextRepository repo;
         private IConfiguration configuration;
 

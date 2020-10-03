@@ -17,7 +17,7 @@ namespace MessageScheduler.Workers
         public void Execute()
         {
             var twilioClient = new TwilioClient(configuration["TwilioAccountSid"], configuration["TwilioAuthToken"], configuration["TwilioPhoneNumber"]);
-            twilioClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "HI BIB!");
+            twilioClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
         }
     }
 }
