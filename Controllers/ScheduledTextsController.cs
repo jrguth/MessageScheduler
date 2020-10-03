@@ -46,12 +46,21 @@ namespace MessageScheduler.Controllers
         }
 
         [HttpPost]
+        [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status201Created)]
         public ActionResult<ScheduledTextModel> Post([FromBody] ScheduledTextModel scheduledText)
         {
             ScheduledText text = mapper.Map<ScheduledText>(scheduledText);
-            repo.CreateScheduledText(text);
-            return Created($"{HttpContext.Request.GetEncodedUrl()}/{text.Id}", text);
+            ScheduledText existing =
+                (from txt in repo.GetScheduledTexts()
+                 where txt.PhoneNumber == text.PhoneNumber
+                 select txt).FirstOrDefault();
+            if (existing is null)
+            {
+                repo.CreateScheduledText(text);
+                return Created($"{HttpContext.Request.GetEncodedUrl()}/{text.Id}", text);
+            }
+            return Ok(mapper.Map<ScheduledTextModel>(existing));
         }
 
         // DELETE api/<ScheduleTextController>/5

@@ -44,7 +44,7 @@ namespace MessageScheduler
             });          
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Message Scheduler API Docs", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Message Scheduler API", Version = "v1" });
             });
             Hangfire.ConfigureService(Configuration["ConnectionString"], services);      
         }
@@ -78,8 +78,8 @@ namespace MessageScheduler
             });
 
             Hangfire.Configure(app);
-            backgroundJobs.Enqueue(() => new Workers.TestTextJob(Configuration).Execute());
-            //Hangfire.InitializeJobs();
+            //backgroundJobs.Enqueue(() => new Workers.TestTextJob(Configuration).Execute());
+            Hangfire.InitializeJobs();
         }
     }
 }
