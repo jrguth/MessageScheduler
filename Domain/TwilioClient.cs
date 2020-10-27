@@ -1,4 +1,6 @@
-﻿using System;
+﻿using MessageScheduler.Configuration;
+using Microsoft.Extensions.Options;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
@@ -8,15 +10,15 @@ using Twilio.Types;
 
 namespace MessageScheduler.Domain
 {
-    public class TwilioClient
+    public class TwilioClient : ISmsClient
     {
-        private readonly string twilioNumber;
         private readonly TwilioRestClient client;
+        private TwilioConfig config;
 
-        public TwilioClient(string accountSid, string authToken, string twilioNumber)
+        public TwilioClient(IOptions<TwilioConfig> options)
         {
-            this.client = new TwilioRestClient(accountSid, authToken);
-            this.twilioNumber = twilioNumber;
+            config = options.Value;
+            client = new TwilioRestClient(config.AccountSid, config.AuthToken);
         }
 
         public void SendSmsMessage(string phoneNumber, string message)
@@ -24,7 +26,7 @@ namespace MessageScheduler.Domain
             var to = new PhoneNumber(phoneNumber);
             MessageResource.Create(
                 to: to,
-                from: new PhoneNumber(twilioNumber),
+                from: new PhoneNumber(config.PhoneNumber),
                 body: message,
                 client: client);
         }

@@ -10,14 +10,15 @@ namespace MessageScheduler.Workers
     public class TestTextJob
     {
         private IConfiguration configuration;
-        public TestTextJob(IConfiguration configuration)
+        private ISmsClient smsClient;
+        public TestTextJob(ISmsClient smsClient, IConfiguration configuration)
         {
+            this.smsClient = smsClient;
             this.configuration = configuration;
         }
         public void Execute()
         {
-            var twilioClient = new TwilioClient(configuration["TwilioAccountSid"], configuration["TwilioAuthToken"], configuration["TwilioPhoneNumber"]);
-            twilioClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
+            smsClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
         }
     }
 }

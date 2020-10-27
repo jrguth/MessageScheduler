@@ -12,21 +12,19 @@ namespace MessageScheduler.Workers
     {
         private const string message = "Hello! This is an automated message test";
         private IScheduledTextRepository repo;
-        private IConfiguration configuration;
+        private ISmsClient smsClient;
 
-        public SendTextJob(IScheduledTextRepository repo, IConfiguration configuration)
+        public SendTextJob(IScheduledTextRepository repo, ISmsClient smsClient)
         {
             this.repo = repo;
-            this.configuration = configuration;
+            this.smsClient = smsClient;
         }
 
         public void Execute()
         {
-            var twilioClient = new TwilioClient(configuration["TwilioAccountSid"], configuration["TwilioAuthToken"], configuration["TwilioPhoneNumber"]);
-            
             foreach (ScheduledText text in GetTextsToSend())
             {
-                twilioClient.SendSmsMessage(text.PhoneNumber, message);
+                smsClient.SendSmsMessage(text.PhoneNumber, message);
             }
         }
 

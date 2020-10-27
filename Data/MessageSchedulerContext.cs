@@ -26,6 +26,15 @@ namespace MessageScheduler.Data
                 .Property(s => s.DateUTC)
                 .IsRequired(true);
             modelBuilder.Entity<ScheduledText>()
+                .Property(s => s.Email)
+                .IsRequired(true);
+            modelBuilder.Entity<ScheduledText>()
+                .Property(s => s.FirstName)
+                .IsRequired(true);
+            modelBuilder.Entity<ScheduledText>()
+                .Property(s => s.LastName)
+                .IsRequired(true);
+            modelBuilder.Entity<ScheduledText>()
                 .Property(s => s.Id)
                 .ValueGeneratedOnAdd();
             modelBuilder.Entity<ScheduledText>()
