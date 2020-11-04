@@ -1,39 +1,26 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using MessageScheduler.Data;
 using MessageScheduler.Configuration;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using AutoMapper;
 using Hangfire;
 using Hangfire.SqlServer;
 using Hangfire.Dashboard;
 using MessageScheduler.Domain;
 using MessageScheduler.Workers;
-using Microsoft.AspNetCore.Authentication.AzureAD.UI;
-using Microsoft.AspNetCore.Authentication.OpenIdConnect;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.OpenApi.Models;
 
 namespace MessageScheduler
 {
     public class Startup
     {
-        private const string AUTH_POLICY_NAME = "HangfireDashboardPolicy";
         private const string DASHBOARD_TITLE = "Message Scheduler Jobs";
-        private const string DASHBOARD_DISPLAY_NAME = "MessageScheduler";
-
         public Startup(IConfiguration configuration, IHostEnvironment hostingEnvironment)
         {
             Configuration = configuration;
@@ -48,22 +35,8 @@ namespace MessageScheduler
         {
             services.AddControllers();
             services.AddMvc();
-            services.AddAuthentication(AzureADDefaults.AuthenticationScheme)
-                .AddAzureAD(options => Configuration.Bind("AzureAd", options))
-                .AddAzureADBearer(options => Configuration.Bind("AzureAd", options));
 
-            services
-                .Configure<TwilioConfig>(Configuration.GetSection("Twilio"))
-                .Configure<OpenIdConnectOptions>(AzureADDefaults.OpenIdScheme, options =>
-                {
-                    options.Authority += "/v2.0";
-                    options.TokenValidationParameters.ValidateIssuer = false;
-                })
-                .Configure<JwtBearerOptions>(AzureADDefaults.JwtBearerAuthenticationScheme, options =>
-                {
-                    options.Authority += "/v2.0";
-                    options.TokenValidationParameters.ValidateIssuer = false;
-                });
+            services.Configure<TwilioConfig>(Configuration.GetSection("Twilio"));
 
             services.AddOptions<DbContextOptions<MessageSchedulerContext>>();
             services.AddAutoMapper(typeof(Startup));
@@ -81,36 +54,8 @@ namespace MessageScheduler
                 {
                     Title = "Message Scheduler API"
                 });
-                options.AddSecurityDefinition("oauth2", new OpenApiSecurityScheme
-                {
-                    Type = SecuritySchemeType.OAuth2,
-                    Flows = new OpenApiOAuthFlows
-                    {
-                        Implicit = new OpenApiOAuthFlow
-                        {
-                            AuthorizationUrl = new Uri($"{Configuration["AzureAd:Instance"]}/common/oauth2/v2.0/authorize", UriKind.Absolute),
-                            TokenUrl = new Uri($"{Configuration["AzureAd:Instance"]}/common/oauth2/v2.0/token", UriKind.Absolute),
-                            Scopes = new Dictionary<string, string>
-                            {
-                                { "openid", "Sign In Permissions" },
-                                { "profile", "User Profile Permissions" },
-                                { $"api://{Configuration["AzureAd:ClientId"]}/access_as_user", "Application API Permissions" }
-                            }
-                        }                   }
-
-                });
             });
-        
-            services.AddAuthorization(options =>
-            {
-                options.AddPolicy(AUTH_POLICY_NAME, builder =>
-                {
-                    builder
-                        .AddAuthenticationSchemes(AzureADDefaults.AuthenticationScheme)
-                        .RequireAuthenticatedUser();
-                });
-            });
-
+       
             services.AddHangfire(configuration => configuration
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_170)
                 .UseSimpleAssemblyNameTypeSerializer()
@@ -152,16 +97,15 @@ namespace MessageScheduler
                 {
                     Authorization = new List<IDashboardAuthorizationFilter> { },
                     DashboardTitle = DASHBOARD_TITLE
-                })
-                .RequireAuthorization(AUTH_POLICY_NAME);
+                });
             });
 
             app.UseSwagger();
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "Message Scheduler API V1");
-                c.OAuthClientId(Configuration["AzureAd:ClientID"]);
             });
+
             app.UseHangfireDashboard();       
 
 

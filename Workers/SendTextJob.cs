@@ -2,9 +2,12 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using System.Diagnostics.Tracing;
 using MessageScheduler.Data;
 using MessageScheduler.Domain;
 using Microsoft.Extensions.Configuration;
+using Twilio.Exceptions;
+using System.Diagnostics;
 
 namespace MessageScheduler.Workers
 {
@@ -24,7 +27,15 @@ namespace MessageScheduler.Workers
         {
             foreach (ScheduledText text in GetTextsToSend())
             {
-                smsClient.SendSmsMessage(text.PhoneNumber, message);
+                Trace.TraceInformation($"Attempting to send message '{message}' to user {text.FirstName} {text.LastName} with phone number {text.PhoneNumber} ");
+                try
+                {
+                    smsClient.SendSmsMessage(text.PhoneNumber, message);
+                }
+                catch (TwilioException e)
+                {
+                    Trace.TraceError($"Failed to send text with message '{message}' to user {text.FirstName} {text.LastName} with phone number {text.PhoneNumber}: {e}");
+                }
             }
         }
 

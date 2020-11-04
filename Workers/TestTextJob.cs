@@ -4,6 +4,9 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using MessageScheduler.Domain;
+using System.Diagnostics.Tracing;
+using Twilio.Exceptions;
+using System.Diagnostics;
 
 namespace MessageScheduler.Workers
 {
@@ -18,7 +21,15 @@ namespace MessageScheduler.Workers
         }
         public void Execute()
         {
-            smsClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
+            Trace.TraceInformation($"Sending test text to {configuration["TestSmsPhoneNumber"]}");
+            try
+            {
+                smsClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
+            }
+            catch (TwilioException e)
+            {
+                Trace.TraceError($"Failed to send test text to {configuration["TestSmsPhoneNumber"]}: {e}");
+            }
         }
     }
 }
