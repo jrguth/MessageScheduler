@@ -15,6 +15,10 @@ using Hangfire.Dashboard;
 using MessageScheduler.Domain;
 using MessageScheduler.Workers;
 using Microsoft.OpenApi.Models;
+using MessageScheduler.Auth;
+using AspNetCore.Authentication.ApiKey;
+using Microsoft.AspNetCore.Mvc.Authorization;
+using Microsoft.AspNetCore.Authorization;
 
 namespace MessageScheduler
 {
@@ -34,6 +38,22 @@ namespace MessageScheduler
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddControllers();
+            services
+                .AddAuthentication(ApiKeyDefaults.AuthenticationScheme)
+                .AddApiKeyInHeaderOrQueryParams<ApiKeyProvider>(options =>
+                {
+                    options.Realm = "Message Scheduler API";
+                    options.KeyName = "Authorization";
+                });
+            
+            services.AddAuthorization(options =>
+            {
+                options.DefaultPolicy = new AuthorizationPolicyBuilder()
+                    .RequireAuthenticatedUser()
+                    .AddAuthenticationSchemes(ApiKeyDefaults.AuthenticationScheme)
+                    .Build();
+            });
+
             services.AddMvc();
 
             services.Configure<TwilioConfig>(Configuration.GetSection("Twilio"));
@@ -42,7 +62,9 @@ namespace MessageScheduler
             services.AddAutoMapper(typeof(Startup));
             
             services.AddSingleton(Configuration);
+            services.AddSingleton<IApiKeyRepository, ApiKeyConfigRepository>();
             services.AddSingleton<ISmsClient, TwilioClient>();
+
             services.AddScoped<IScheduledTextRepository, ScheduledTextRepository>();
             services.AddDbContext<MessageSchedulerContext>(options =>
             {
@@ -72,7 +94,7 @@ namespace MessageScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, IBackgroundJobClient backgroundJobs, MessageSchedulerContext context)
+        public void Configure(IApplicationBuilder app, MessageSchedulerContext context)
         {
             if (HostingEnvironment.IsDevelopment())
             {
@@ -88,29 +110,24 @@ namespace MessageScheduler
 
             app.UseAuthentication();
 
+
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapControllers();
-                endpoints.MapHangfireDashboard("/dashboard", new DashboardOptions
-                {
-                    Authorization = new List<IDashboardAuthorizationFilter> { },
-                    DashboardTitle = DASHBOARD_TITLE
-                });
+                endpoints.MapControllers().RequireAuthorization();
             });
 
             app.UseSwagger();
-            app.UseSwaggerUI(c =>
-            {
-                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Message Scheduler API V1");
-            });
 
-            app.UseHangfireDashboard();       
+            app.UseHangfireDashboard(options: new DashboardOptions
+            {
+                Authorization = new[] { new DashboardFilter() }
+            });
 
 
             var testJob = new TestTextJob(app.ApplicationServices.GetService<ISmsClient>(), Configuration);
-            backgroundJobs.Enqueue(() => testJob.Execute());
+            //backgroundJobs.Enqueue(() => testJob.Execute());
             RecurringJob.AddOrUpdate<SendTextJob>(job => job.Execute(), Cron.Minutely);
         }
     }
