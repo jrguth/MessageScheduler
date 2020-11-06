@@ -9,6 +9,5 @@ namespace MessageScheduler.Auth
     public interface IApiKeyRepository
     {
         IApiKey GetApiKey();
-        IApiKey GetAdminApiKey();
     }
 }

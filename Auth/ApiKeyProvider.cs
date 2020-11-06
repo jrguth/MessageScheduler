@@ -17,11 +17,6 @@ namespace MessageScheduler.Auth
         public Task<IApiKey> ProvideAsync(string key)
         {
             IApiKey retKey = keyRepo.GetApiKey();
-            if (retKey.Key.Equals(key))
-            {
-                return Task.FromResult(retKey);
-            }
-            retKey = keyRepo.GetAdminApiKey();
             return retKey.Key.Equals(key)
                 ? Task.FromResult(retKey)
                 : Task.FromResult<IApiKey>(null);

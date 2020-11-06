@@ -10,25 +10,25 @@ using System.Diagnostics;
 
 namespace MessageScheduler.Workers
 {
-    public class TestTextJob
+    public class StartupTextJob
     {
         private IConfiguration configuration;
         private ISmsClient smsClient;
-        public TestTextJob(ISmsClient smsClient, IConfiguration configuration)
+        public StartupTextJob(ISmsClient smsClient, IConfiguration configuration)
         {
             this.smsClient = smsClient;
             this.configuration = configuration;
         }
         public void Execute()
         {
-            Trace.TraceInformation($"Sending test text to {configuration["TestSmsPhoneNumber"]}");
+            Trace.TraceInformation($"Sending startup text to {configuration["TestSmsPhoneNumber"]}");
             try
             {
-                smsClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! This is an automated message test");
+                smsClient.SendSmsMessage(configuration["TestSmsPhoneNumber"], "Hello! Message Scheduler is up and running!");
             }
             catch (TwilioException e)
             {
-                Trace.TraceError($"Failed to send test text to {configuration["TestSmsPhoneNumber"]}: {e}");
+                Trace.TraceError($"Failed to send startup text to {configuration["TestSmsPhoneNumber"]}: {e}");
             }
         }
     }

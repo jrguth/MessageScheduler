@@ -24,15 +24,5 @@ namespace MessageScheduler.Auth
                 OwnerName = "User"
             };
         }
-
-        public IApiKey GetAdminApiKey()
-        {
-            return new ApiKey
-            {
-                Key = config.GetValue<string>("AdminAuthorization"),
-                OwnerName = "Administrator",
-                Roles = new List<string> { "User", "Administrator" }
-            };
-        }
     }
 }

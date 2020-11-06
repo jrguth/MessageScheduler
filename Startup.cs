@@ -54,9 +54,9 @@ namespace MessageScheduler
                     .Build();
             });
 
-            services.AddMvc();
-
-            services.Configure<TwilioConfig>(Configuration.GetSection("Twilio"));
+            services
+                .Configure<TwilioConfig>(Configuration.GetSection("Twilio"))
+                .Configure<IpSafeListConfig>(Configuration.GetSection("IpSafeList"), options => options.BindNonPublicProperties = true);
 
             services.AddOptions<DbContextOptions<MessageSchedulerContext>>();
             services.AddAutoMapper(typeof(Startup));
@@ -64,7 +64,7 @@ namespace MessageScheduler
             services.AddSingleton(Configuration);
             services.AddSingleton<IApiKeyRepository, ApiKeyConfigRepository>();
             services.AddSingleton<ISmsClient, TwilioClient>();
-
+            services.AddSingleton<IRequestAuthStrategy, IpWhitelistAuthStrategy>();
             services.AddScoped<IScheduledTextRepository, ScheduledTextRepository>();
             services.AddDbContext<MessageSchedulerContext>(options =>
             {
@@ -75,6 +75,26 @@ namespace MessageScheduler
                 options.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "Message Scheduler API"
+                });
+                var apiKeyScheme = new OpenApiSecurityScheme
+                {
+                    Type = SecuritySchemeType.ApiKey,
+                    In = ParameterLocation.Header,
+                    Name = "Authorization",
+                    Description = "Required header for authorization. Header name: 'Authorization'",
+                    Reference = new OpenApiReference
+                    {
+                        Type = ReferenceType.SecurityScheme,
+                        Id = "API Key Authorization"
+                    }
+                };
+                options.AddSecurityDefinition("API Key Authorization", apiKeyScheme);
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        apiKeyScheme,
+                        new string[] {}
+                    }
                 });
             });
        
@@ -94,7 +114,7 @@ namespace MessageScheduler
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
-        public void Configure(IApplicationBuilder app, MessageSchedulerContext context)
+        public void Configure(IApplicationBuilder app, IBackgroundJobClient backgroundJobs, MessageSchedulerContext context)
         {
             if (HostingEnvironment.IsDevelopment())
             {
@@ -113,21 +133,27 @@ namespace MessageScheduler
 
             app.UseAuthorization();
 
+            app.UseHangfireDashboard("/hangfire", new DashboardOptions
+            {
+                Authorization = new[] { new HangfireDashboardFilter(app.ApplicationServices.GetRequiredService<IRequestAuthStrategy>()) }
+            });
+
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers().RequireAuthorization();
             });
 
+            app.UseMiddleware<NonApiMiddleware>();
+                   
             app.UseSwagger();
-
-            app.UseHangfireDashboard(options: new DashboardOptions
+            app.UseSwaggerUI(c =>
             {
-                Authorization = new[] { new DashboardFilter() }
+                c.RoutePrefix = "swagger";
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Message Scheduler API V1");
             });
 
-
-            var testJob = new TestTextJob(app.ApplicationServices.GetService<ISmsClient>(), Configuration);
-            //backgroundJobs.Enqueue(() => testJob.Execute());
+            var testJob = new StartupTextJob(app.ApplicationServices.GetService<ISmsClient>(), Configuration);
+            backgroundJobs.Enqueue(() => testJob.Execute());
             RecurringJob.AddOrUpdate<SendTextJob>(job => job.Execute(), Cron.Minutely);
         }
     }

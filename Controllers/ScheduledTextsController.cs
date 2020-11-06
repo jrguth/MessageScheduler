@@ -8,12 +8,10 @@ using MessageScheduler.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Http.Extensions;
 using AutoMapper;
-using MessageScheduler.Auth;
 
 namespace MessageScheduler.Controllers
 {
     [Route("api/v1/ScheduledTexts")]
-    [ApiKeyAuth]
     [ApiController]
     public class ScheduledTextsController : ControllerBase
     {
