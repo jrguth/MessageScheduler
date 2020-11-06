@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 
@@ -17,14 +18,10 @@ namespace MessageScheduler.Auth
         public bool IsRequestAuthorized(HttpContext context)
         {
             IPAddress remoteIp = context.Connection.RemoteIpAddress;
-            if (remoteIp.IsIPv4MappedToIPv6)
-            {
-                remoteIp = remoteIp.MapToIPv4();
-            }
-            return
-                (from address in safeListConfig.IpAddresses
-                 where !string.IsNullOrEmpty(address) && IPAddress.Parse(address).GetAddressBytes().SequenceEqual(remoteIp.GetAddressBytes())
-                 select address).Any();
+            Trace.TraceInformation("Checking if request from IP {0} is whitelisted in {1}", remoteIp.ToString(), string.Join(";", safeListConfig.IpAddresses));
+            return safeListConfig.IpAddresses
+                .Where(ip => IPAddress.Parse(ip).Equals(remoteIp))
+                .Any();
         }
     }
 }

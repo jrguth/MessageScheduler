@@ -1,6 +1,9 @@
-﻿using MessageScheduler.Configuration;
+﻿using AutoMapper.Configuration;
+using MessageScheduler.Configuration;
+using MessageScheduler.Domain;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Options;
+using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Threading.Tasks;
@@ -22,8 +25,10 @@ namespace MessageScheduler.Auth
         {
             if (!context.Request.Path.StartsWithSegments("/api"))
             {
+                Trace.TraceInformation("Received non-api request at path: {0}", context.Request.Path);
                 if (!requestAuthStrategy.IsRequestAuthorized(context))
                 {
+                    Trace.TraceWarning("Request is not authorized");
                     context.Response.StatusCode = StatusCodes.Status403Forbidden;
                     return;
                 }               

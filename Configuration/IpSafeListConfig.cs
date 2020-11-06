@@ -8,6 +8,9 @@ namespace MessageScheduler.Configuration
     public class IpSafeListConfig
     {
         private string IpString { get; set; }
-        public IReadOnlyList<string> IpAddresses => IpString.Split(';');
+        public IReadOnlyList<string> IpAddresses => IpString
+            .Split(';')
+            .Where(ip => !string.IsNullOrEmpty(ip))
+            .ToList();
     }
 }
