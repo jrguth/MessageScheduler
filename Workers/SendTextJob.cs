@@ -43,7 +43,7 @@ namespace MessageScheduler.Workers
         {
             return repo
                 .GetScheduledTexts()
-                .Where(text => DateTime.UtcNow.Minute == text.DateUTC.Minute);
+                .Where(text => DateTime.UtcNow.Minute == text.DateUTC.Minute && DateTime.UtcNow.Hour == text.DateUTC.Hour);
         }
     }
 }
